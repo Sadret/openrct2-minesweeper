@@ -5,6 +5,7 @@
  * under the GNU General Public License version 3.
  *****************************************************************************/
 
+import Display from "./Display";
 import Field from "./Field";
 import Minesweeper from "./Minesweeper";
 
@@ -58,84 +59,47 @@ export default class GameWindow {
 
         const widgets: Widget[] = [];
 
-        const widgetList: Widget[] = [{
-            type: "custom",
-            x: GameWindow.margin,
-            y: 14 + GameWindow.margin,
-            width: 56 + 1,
-            height: 27 + 1,
-            onDraw: g => {
-
-                g.stroke = 0;
-                g.fill = 13;
-                g.rect(0, 0, 56, 27);
-
-                g.stroke = 94;
-
-                // upper left
-                g.line(3, 4, 3 + 1, 13);
-                g.line(4, 5, 4 + 1, 12);
-                g.line(5, 6, 5 + 1, 11);
-
-                g.stroke = 100;
-
-                // lower left
-                g.line(3, 14, 3 + 1, 23);
-                g.line(4, 15, 4 + 1, 22);
-                g.line(5, 16, 5 + 1, 21);
-
-                // upper right
-                g.line(13, 4, 13 + 1, 13);
-                g.line(12, 5, 12 + 1, 12);
-                g.line(11, 6, 11 + 1, 11);
-
-                g.stroke = 94;
-
-                // lower right
-                g.line(13, 14, 13 + 1, 23);
-                g.line(12, 15, 12 + 1, 22);
-                g.line(11, 16, 11 + 1, 21);
-
-                g.stroke = 100;
-
-                // top
-                g.line(4, 3, 13, 3);
-                g.line(5, 4, 12, 4);
-                g.line(6, 5, 11, 5);
-
-                // middle
-                g.line(5, 12, 12, 12);
-                g.line(4, 13, 13, 13);
-                g.line(5, 14, 12, 14);
-
-                // bottom
-                g.line(4, 23, 13, 23);
-                g.line(5, 22, 12, 22);
-                g.line(6, 21, 11, 21);
-
-                // g.text(String(this.game ? this.game.getMines() : this.mines), 0, 0);
+        const widgetList: Widget[] = [
+            Display.getMineDisplay(
+                GameWindow.margin,
+                14 + GameWindow.margin,
+                Math.ceil(Math.log10(this.mines)),
+                () => this.game ? this.game.getMines() : this.mines,
+            ),
+            {
+                type: "button",
+                x: width / 2 - 29 / 2 - 32,
+                y: 14 + GameWindow.margin,
+                width: 29,
+                height: 27,
+                image: 5201,
+                onClick: () => ui.showError("Coming soon...", ""),
             },
-        }, {
-            type: "custom",
-            x: width - GameWindow.margin - 64,
-            y: 14 + GameWindow.margin + 1,
-            width: 64,
-            height: 12,
-            onDraw: g => {
-                g.colour = 2;
-                const text = this.game ? String(Math.floor(this.game.getTime() / 1000)) : "-";
-                g.text(text, g.width - g.measureText(text).width, 0);
+            {
+                type: "button",
+                x: width / 2 - 29 / 2,
+                y: 14 + GameWindow.margin,
+                width: 29,
+                height: 27,
+                name: "face",
+                image: 5287,
+                onClick: () => this.reset(),
             },
-        }, {
-            type: "button",
-            x: width / 2 - 29 / 2 - 64,
-            y: 14 + GameWindow.margin,
-            width: 29,
-            height: 27,
-            name: "face",
-            image: 5287,
-            onClick: () => this.reset(),
-        },];
+            {
+                type: "button",
+                x: width / 2 - 29 / 2 + 32,
+                y: 14 + GameWindow.margin,
+                width: 29,
+                height: 27,
+                image: 5229,
+                onClick: () => ui.showError("Coming soon...", ""),
+            },
+            Display.getTimeDisplay(
+                width - GameWindow.margin,
+                14 + GameWindow.margin,
+                () => this.game ? this.game.getTime() : -1,
+            ),
+        ];
 
         const popWidget = () => widgetList.pop() || this.createLabel();
 
