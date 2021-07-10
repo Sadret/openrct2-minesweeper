@@ -97,7 +97,6 @@ export default class Minesweeper {
 
         if (!this.end && this.opened === this.cols * this.rows - this.mines) {
             this.won = this.end = true;
-            this.time = new Date().getTime() - this.time;
 
             for (let x = 0, id = 0; x < this.cols; x++)
                 for (let y = 0; y < this.rows; y++ , id++)
@@ -110,6 +109,11 @@ export default class Minesweeper {
                 initialValue: "Sadret",
                 callback: name => console.log(name),
             });
+        }
+
+        if (this.end) {
+            this.time = new Date().getTime() - this.time;
+            this.window.onGameEnd(this.won);
         }
     }
 
@@ -137,12 +141,6 @@ export default class Minesweeper {
                             this.openField(this.board[x][y], true);
                         else if (!this.board[x][y].mine && this.board[x][y].flagged)
                             this.board[x][y].error = true, this.window.updateText(this.board[x][y]);
-
-            ui.showError(
-                "Minesweeper",
-                "You lost the game!",
-            );
-            console.log("lost");
         }
         if (!field.mine && field.mineCnt === 0 && !field.propagated)
             this.propagate(field);

@@ -17,6 +17,7 @@ export default class GameWindow {
     // board size
     private readonly cols: number;
     private readonly rows: number;
+    private readonly mines: number;
 
     // button management
     private readonly s: number; // the total number of buttons
@@ -28,13 +29,14 @@ export default class GameWindow {
     private pressed: number = 0;
 
     private game: Minesweeper | undefined = undefined;
-    private fields: Field[] = [];
+    private readonly fields: Field[] = [];
 
     private readonly window: Window;
 
-    constructor(cols: number, rows: number) {
+    constructor(cols: number, rows: number, mines: number) {
         this.cols = cols;
         this.rows = rows;
+        this.mines = mines;
 
         this.s = cols * rows;
         this.b = (() => {
@@ -47,23 +49,71 @@ export default class GameWindow {
         this.c = Math.ceil((this.s + 1 - (1 << this.b)) / this.a);
 
         this.window = this.open();
+        this.reset();
     }
 
     private open(): Window {
         const width = GameWindow.margin + this.cols * (GameWindow.size + GameWindow.padding) - GameWindow.padding + GameWindow.margin;
-        const height = 2 * (14 + GameWindow.margin) + this.rows * (GameWindow.size + GameWindow.padding) - GameWindow.padding + GameWindow.margin;
+        const height = 14 + GameWindow.margin + 27 + GameWindow.margin + this.rows * (GameWindow.size + GameWindow.padding) - GameWindow.padding + GameWindow.margin;
 
         const widgets: Widget[] = [];
 
         const widgetList: Widget[] = [{
             type: "custom",
             x: GameWindow.margin,
-            y: 14 + GameWindow.margin + 1,
-            width: 64,
-            height: 12,
+            y: 14 + GameWindow.margin,
+            width: 56 + 1,
+            height: 27 + 1,
             onDraw: g => {
-                g.colour = 2;
-                g.text(this.game ? String(this.game.getMines()) : "-", 0, 0);
+
+                g.stroke = 0;
+                g.fill = 13;
+                g.rect(0, 0, 56, 27);
+
+                g.stroke = 94;
+
+                // upper left
+                g.line(3, 4, 3 + 1, 13);
+                g.line(4, 5, 4 + 1, 12);
+                g.line(5, 6, 5 + 1, 11);
+
+                g.stroke = 100;
+
+                // lower left
+                g.line(3, 14, 3 + 1, 23);
+                g.line(4, 15, 4 + 1, 22);
+                g.line(5, 16, 5 + 1, 21);
+
+                // upper right
+                g.line(13, 4, 13 + 1, 13);
+                g.line(12, 5, 12 + 1, 12);
+                g.line(11, 6, 11 + 1, 11);
+
+                g.stroke = 94;
+
+                // lower right
+                g.line(13, 14, 13 + 1, 23);
+                g.line(12, 15, 12 + 1, 22);
+                g.line(11, 16, 11 + 1, 21);
+
+                g.stroke = 100;
+
+                // top
+                g.line(4, 3, 13, 3);
+                g.line(5, 4, 12, 4);
+                g.line(6, 5, 11, 5);
+
+                // middle
+                g.line(5, 12, 12, 12);
+                g.line(4, 13, 13, 13);
+                g.line(5, 14, 12, 14);
+
+                // bottom
+                g.line(4, 23, 13, 23);
+                g.line(5, 22, 12, 22);
+                g.line(6, 21, 11, 21);
+
+                // g.text(String(this.game ? this.game.getMines() : this.mines), 0, 0);
             },
         }, {
             type: "custom",
@@ -76,7 +126,16 @@ export default class GameWindow {
                 const text = this.game ? String(Math.floor(this.game.getTime() / 1000)) : "-";
                 g.text(text, g.width - g.measureText(text).width, 0);
             },
-        }];
+        }, {
+            type: "button",
+            x: width / 2 - 29 / 2 - 64,
+            y: 14 + GameWindow.margin,
+            width: 29,
+            height: 27,
+            name: "face",
+            image: 5287,
+            onClick: () => this.reset(),
+        },];
 
         const popWidget = () => widgetList.pop() || this.createLabel();
 
@@ -107,11 +166,34 @@ export default class GameWindow {
         });
     }
 
-    restart(mines: number): void {
-        this.game = new Minesweeper(this.cols, this.rows, mines, this);
+    private reset(): void {
+        this.game = undefined;
+
+        this.usedRows = 0;
+        this.buffered = 0;
+        this.pressed = 0;
+        this.fields.length = 0;
+
+        for (let x = 0, id = 0; x < this.cols; x++) {
+            for (let y = 0; y < this.rows; y++ , id++) {
+                const widget = this.getWidget(id);
+                widget.x = this.getButtonX(x);
+                widget.y = this.getButtonY(y);
+
+                widget.isPressed = false;
+                widget.text = "";
+            }
+        }
+
+        this.window.findWidget<ButtonWidget>("face").image = 5287;
+    }
+
+    private start(): void {
+        this.game = new Minesweeper(this.cols, this.rows, this.mines, this);
+
         for (let x = 0, id = 0; x < this.cols; x++)
             for (let y = 0; y < this.rows; y++ , id++)
-                (field => this.assignButton(field.buttonId, field))(this.game.getField(x, y));
+                this.assignButton(id, this.game.getField(x, y));
     }
 
     private createLabel(): LabelWidget {
@@ -135,7 +217,11 @@ export default class GameWindow {
             width: GameWindow.size,
             height: GameWindow.size,
             name: name,
-            onClick: () => this.game ?.clickField(this.fields[id]),
+            onClick: () => {
+                if (!this.game)
+                    this.start();
+                this.game ?.clickField(this.fields[id]);
+            },
         };
     }
 
@@ -188,6 +274,10 @@ export default class GameWindow {
         }
     }
 
+    onGameEnd(won: boolean) {
+        this.window.findWidget<ButtonWidget>("face").image = won ? 5290 : 5284;
+    }
+
     private swapButtons(id1: number, id2: number) {
         var field1 = this.fields[id1];
         var field2 = this.fields[id2];
@@ -216,7 +306,7 @@ export default class GameWindow {
         return GameWindow.margin + x * (GameWindow.size + GameWindow.padding);
     }
     private getButtonY(y: number): number {
-        return 2 * (14 + GameWindow.margin) + y * (GameWindow.size + GameWindow.padding);
+        return 14 + GameWindow.margin + 27 + GameWindow.margin + y * (GameWindow.size + GameWindow.padding);
     }
 
     private getWidget(id: number): ButtonWidget {
