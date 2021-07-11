@@ -72,6 +72,7 @@ export default class GameWindow {
                 y: 14 + GameWindow.margin,
                 width: 29,
                 height: 27,
+                tooltip: "Settings",
                 image: 5201,
                 onClick: () => ui.showError("Coming soon...", ""),
             },
@@ -81,6 +82,7 @@ export default class GameWindow {
                 y: 14 + GameWindow.margin,
                 width: 29,
                 height: 27,
+                tooltip: "New Game",
                 name: "face",
                 image: 5287,
                 onClick: () => this.reset(),
@@ -91,6 +93,7 @@ export default class GameWindow {
                 y: 14 + GameWindow.margin,
                 width: 29,
                 height: 27,
+                tooltip: "Highscores",
                 image: 5229,
                 onClick: () => ui.showError("Coming soon...", ""),
             },
@@ -108,12 +111,12 @@ export default class GameWindow {
                 widgets.push(popWidget(), popWidget());
             let j = 0;
             for (; j * this.c + cpy < this.s - (1 << this.b) + 1 && j < this.a; j++)
-                widgets.push(this.createButton(j * this.c + cpy, i++));
+                widgets.push(this.createButton(j * this.c + cpy));
             for (; j < this.a; j++)
                 widgets.push(this.createLabel());
             for (let j = 0; j < this.b; j++)
                 if (cpy < (1 << j))
-                    widgets.push(this.createButton(this.s - (1 << this.b) + (1 << j) + cpy, i++));
+                    widgets.push(this.createButton(this.s - (1 << this.b) + (1 << j) + cpy));
                 else
                     widgets.push(this.createLabel());
         }
@@ -152,8 +155,8 @@ export default class GameWindow {
         this.window.findWidget<ButtonWidget>("face").image = 5287;
     }
 
-    private start(): void {
-        this.game = new Minesweeper(this.cols, this.rows, this.mines, this);
+    private start(sx: number, sy: number): void {
+        this.game = new Minesweeper(this.cols, this.rows, this.mines, sx, sy, this);
 
         for (let x = 0, id = 0; x < this.cols; x++)
             for (let y = 0; y < this.rows; y++ , id++)
@@ -170,10 +173,10 @@ export default class GameWindow {
         };
     }
 
-    private createButton(id: number, fieldIdx: number): ButtonWidget {
+    private createButton(id: number): ButtonWidget {
         const name = this.getWidgetName(id);
-        const x = fieldIdx % this.cols;
-        const y = (fieldIdx - x) / this.cols;
+        const x = Math.floor(id / this.rows);
+        const y = id % this.rows;
         return {
             type: "button",
             x: this.getButtonX(x),
@@ -183,7 +186,7 @@ export default class GameWindow {
             name: name,
             onClick: () => {
                 if (!this.game)
-                    this.start();
+                    this.start(x, y);
                 this.game ?.clickField(this.fields[id]);
             },
         };

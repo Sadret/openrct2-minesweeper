@@ -29,27 +29,28 @@ export default class Minesweeper {
         cols: number,
         rows: number,
         mines: number,
+        sx: number,
+        sy: number,
         window: GameWindow,
     ) {
-        this.rows = rows;
         this.cols = cols;
+        this.rows = rows;
         this.mines = mines;
         this.window = window;
 
-        let fieldCnt = rows * cols;
+        const range = (val: number, max: number) => Math.min(max - 1, val + 1) - Math.max(0, val - 1) + 1;
+        const blocked = range(sx, this.cols) * range(sy, this.rows);
+
+        let fieldCnt = rows * cols - blocked;
         let mineCnt = mines;
 
         // init fields
         for (let x = 0, id = 0; x < cols; x++) {
             this.board.push([]);
             for (let y = 0; y < rows; y++ , id++) {
-                const mine = Math.random() < mineCnt / fieldCnt;
-                this.board[x].push(new Field(
-                    x,
-                    y,
-                    mine,
-                    id,
-                ));
+                const mine = Math.random() < mineCnt / fieldCnt
+                    && (x < sx - 1 || x > sx + 1 || y < sy - 1 || y > sy + 1);
+                this.board[x].push(new Field(x, y, mine, id));
                 fieldCnt--;
                 if (mine)
                     mineCnt--;

@@ -10,6 +10,6 @@ registerPlugin({
     licence: "GPL-3.0",
     minApiVersion: 24,
     main: () => {
-        new GameWindow(17, 13, 16);
+        new GameWindow(17, 13, 16 * 2);
     },
 });
