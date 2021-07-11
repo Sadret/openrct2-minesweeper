@@ -14,14 +14,14 @@ import SettingsWindow from "./SettingsWindow";
 
 // style
 const margin: number = 3;
-const size: number = 14;
+const btnSize: number = 14;
 const padding: number = 2;
 
 function getButtonX(x: number): number {
-    return margin + x * (size + padding);
+    return margin + x * (btnSize + padding);
 }
 function getButtonY(y: number): number {
-    return 14 + margin + 27 + margin + y * (size + padding);
+    return 14 + margin + 27 + margin + y * (btnSize + padding);
 }
 
 function getString(amount: number) {
@@ -97,21 +97,30 @@ export default class GameWindow {
     }
 
     private open(): Window {
-        const width = margin + this.cols * (size + padding) - padding + margin;
-        const height = 14 + margin + 27 + margin + this.rows * (size + padding) - padding + margin;
+        const width = margin + this.cols * (btnSize + padding) - padding + margin;
+        const height = 14 + margin + 27 + margin + this.rows * (btnSize + padding) - padding + margin;
+
+        const mineDisplay = Display.getMineDisplay(
+            margin,
+            14 + margin,
+            Math.ceil(Math.log10(this.mines)),
+            () => this.game ? this.game.getMines() : this.mines,
+        );
+        const timeDisplay = Display.getTimeDisplay(
+            width - margin,
+            14 + margin,
+            () => this.game ? this.game.getTime() : -1,
+        );
+
+        const center = this.size === 0 ? (mineDisplay.x + mineDisplay.width + timeDisplay.x) / 2 : width / 2;
 
         const widgets: Widget[] = [];
 
         const widgetList: Widget[] = [
-            Display.getMineDisplay(
-                margin,
-                14 + margin,
-                Math.ceil(Math.log10(this.mines)),
-                () => this.game ? this.game.getMines() : this.mines,
-            ),
+            mineDisplay,
             {
                 type: "button",
-                x: width / 2 - 29 / 2 - 32,
+                x: center - 29 / 2 - 32,
                 y: 14 + margin,
                 width: 29,
                 height: 27,
@@ -121,7 +130,7 @@ export default class GameWindow {
             },
             {
                 type: "button",
-                x: width / 2 - 29 / 2,
+                x: center - 29 / 2,
                 y: 14 + margin,
                 width: 29,
                 height: 27,
@@ -132,7 +141,7 @@ export default class GameWindow {
             },
             {
                 type: "button",
-                x: width / 2 - 29 / 2 + 32,
+                x: center - 29 / 2 + 32,
                 y: 14 + margin,
                 width: 29,
                 height: 27,
@@ -140,23 +149,21 @@ export default class GameWindow {
                 image: 5229,
                 onClick: () => new HighscoresWindow(),
             },
-            Display.getTimeDisplay(
-                width - margin,
-                14 + margin,
-                () => this.game ? this.game.getTime() : -1,
-            ),
+            timeDisplay,
         ];
 
         const popWidget = () => widgetList.pop() || this.createLabel();
 
-        for (let cpy = 0, i = 0; cpy < this.c; cpy++) {
+        for (let cpy = 0; cpy < this.c; cpy++) {
             if (cpy !== 0)
                 widgets.push(popWidget(), popWidget());
             let j = 0;
             for (; j * this.c + cpy < this.s - (1 << this.b) + 1 && j < this.a; j++)
                 widgets.push(this.createButton(j * this.c + cpy));
-            for (; j < this.a; j++)
+            for (; j * this.c < this.s - (1 << this.b) + 1 && j < this.a; j++)
                 widgets.push(this.createLabel());
+            for (; j < this.a; j++)
+                widgets.push(popWidget());
             for (let j = 0; j < this.b; j++)
                 if (cpy < (1 << j))
                     widgets.push(this.createButton(this.s - (1 << this.b) + (1 << j) + cpy));
@@ -224,8 +231,8 @@ export default class GameWindow {
             type: "button",
             x: getButtonX(x),
             y: getButtonY(y),
-            width: size,
-            height: size,
+            width: btnSize,
+            height: btnSize,
             name: name,
             onClick: () => {
                 if (!this.game)
