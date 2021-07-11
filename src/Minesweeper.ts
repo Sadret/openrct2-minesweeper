@@ -7,8 +7,13 @@
 
 import Field from "./Field";
 import GameWindow from "./GameWindow";
+import Modes from "./Modes";
+import Persistence from "./Persistence";
 
 export default class Minesweeper {
+    private readonly size: number;
+    private readonly difficulty: number;
+
     private readonly cols: number;
     private readonly rows: number;
     private readonly mines: number;
@@ -26,17 +31,21 @@ export default class Minesweeper {
     private time = new Date().getTime();
 
     constructor(
-        cols: number,
-        rows: number,
-        mines: number,
+        size: number,
+        difficulty: number,
         sx: number,
         sy: number,
         window: GameWindow,
     ) {
-        this.cols = cols;
-        this.rows = rows;
-        this.mines = mines;
+        this.size = size;
+        this.difficulty = difficulty;
         this.window = window;
+
+        const cols = this.cols = Modes.getCols(size);
+        const rows = this.rows = Modes.getRows(size);
+        const mines = this.mines = Modes.getMines(size, difficulty);
+
+        Persistence.startGame(size, difficulty);
 
         const range = (val: number, max: number) => Math.min(max - 1, val + 1) - Math.max(0, val - 1) + 1;
         const blocked = range(sx, this.cols) * range(sy, this.rows);
@@ -103,18 +112,12 @@ export default class Minesweeper {
                 for (let y = 0; y < this.rows; y++ , id++)
                     if (this.board[x][y].mine)
                         this.flagField(this.board[x][y]);
-
-            ui.showTextInput({
-                title: "Minesweeper",
-                description: "You won the game! Please enter your name:",
-                initialValue: "Sadret",
-                callback: name => console.log(name),
-            });
         }
 
         if (this.end) {
             this.time = new Date().getTime() - this.time;
             this.window.onGameEnd(this.won);
+            Persistence.endGame(this.size, this.difficulty, this.won, this.time);
         }
     }
 

@@ -14,7 +14,5 @@ registerPlugin({
             return console.log("[minesweeper] Loading cancelled: game runs in headless mode.");
 
         ui.registerMenuItem("Minesweeper", () => new SettingsWindow());
-        // testing
-        new SettingsWindow();
     },
 });

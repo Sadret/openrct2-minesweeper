@@ -6,10 +6,7 @@
  *****************************************************************************/
 
 import GameWindow from "./GameWindow";
-
-const f = [0, 1];
-while (f.length < 18)
-    f.push(f[f.length - 1] + f[f.length - 2]);
+import Modes from "./Modes";
 
 export default class SettingsWindow {
     private readonly window: Window;
@@ -57,12 +54,61 @@ export default class SettingsWindow {
         if (this.callback)
             this.callback();
         this.window.close();
-        new GameWindow(f[this.size + 7], f[this.size + 6], f[2 * this.size + this.difficulty + 7]);
+        new GameWindow(this.size, this.difficulty);
     }
 
     private open() {
         const width = 256;
         const height = 126;
+
+        const widgets: Widget[] = [{
+            type: "groupbox",
+            text: "Size",
+            x: 5,
+            y: 20,
+            width: 122,
+            height: 101,
+        }, {
+            type: "groupbox",
+            text: "Difficulty",
+            x: 129,
+            y: 20,
+            width: 122,
+            height: 69,
+        }, {
+            type: "button",
+            name: "ok",
+            text: "New Game",
+            x: 135,
+            y: 101,
+            width: 110,
+            height: 14,
+            isDisabled: true,
+            onClick: () => this.ok(),
+        },];
+
+        Modes.sizes.forEach((label, idx) => widgets.push({
+            type: "button",
+            name: "size_" + idx,
+            text: label,
+            x: 11,
+            y: 37 + idx * 16,
+            width: 110,
+            height: 14,
+            onClick: () => this.setSize(idx),
+        }));
+
+        Modes.difficulties.forEach((label, idx) => widgets.push({
+            type: "button",
+            name: "difficulty_" + idx,
+            text: label,
+            x: 135,
+            y: 37 + idx * 16,
+            width: 110,
+            height: 14,
+            onClick: () => this.setDifficulty(idx),
+        }));
+
         return ui.openWindow({
             classification: "minesweeper-settings",
             width: width,
@@ -70,103 +116,7 @@ export default class SettingsWindow {
             x: (ui.width - width) / 2,
             y: (ui.height - height) / 2,
             title: "Minesweeper - Settings",
-            widgets: [{
-                type: "groupbox",
-                text: "Size",
-                x: 5,
-                y: 20,
-                width: 122,
-                height: 101,
-            }, {
-                type: "button",
-                name: "size_0",
-                text: "Tiny",
-                x: 11,
-                y: 37,
-                width: 110,
-                height: 14,
-                onClick: () => this.setSize(0),
-            }, {
-                type: "button",
-                name: "size_1",
-                text: "Small",
-                x: 11,
-                y: 53,
-                width: 110,
-                height: 14,
-                onClick: () => this.setSize(1),
-            }, {
-                type: "button",
-                name: "size_2",
-                text: "Medium",
-                x: 11,
-                y: 69,
-                width: 110,
-                height: 14,
-                onClick: () => this.setSize(2),
-            }, {
-                type: "button",
-                name: "size_3",
-                text: "Large",
-                x: 11,
-                y: 85,
-                width: 110,
-                height: 14,
-                onClick: () => this.setSize(3),
-            }, {
-                type: "button",
-                name: "size_4",
-                text: "Huge",
-                x: 11,
-                y: 101,
-                width: 110,
-                height: 14,
-                onClick: () => this.setSize(4),
-            }, {
-                type: "groupbox",
-                text: "Difficulty",
-                x: 129,
-                y: 20,
-                width: 122,
-                height: 69,
-            }, {
-                type: "button",
-                name: "difficulty_0",
-                text: "Beginner",
-                x: 135,
-                y: 37,
-                width: 110,
-                height: 14,
-                onClick: () => this.setDifficulty(0),
-            }, {
-                type: "button",
-                name: "difficulty_1",
-                text: "Advanced",
-                x: 135,
-                y: 53,
-                width: 110,
-                height: 14,
-                onClick: () => this.setDifficulty(1),
-            }, {
-                type: "button",
-                name: "difficulty_2",
-                text: "Expert",
-                x: 135,
-                y: 69,
-                width: 110,
-                height: 14,
-                onClick: () => this.setDifficulty(2),
-            }, {
-                type: "button",
-                name: "ok",
-                text: "New Game",
-                x: 135,
-                y: 101,
-                width: 110,
-                height: 14,
-                isDisabled: true,
-                onClick: () => this.ok(),
-            },],
+            widgets: widgets,
         });
     }
 }

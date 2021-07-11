@@ -7,14 +7,53 @@
 
 import Display from "./Display";
 import Field from "./Field";
+import HighscoresWindow from "./HighscoresWindow";
 import Minesweeper from "./Minesweeper";
+import Modes from "./Modes";
 import SettingsWindow from "./SettingsWindow";
 
+// style
+const margin: number = 3;
+const size: number = 14;
+const padding: number = 2;
+
+function getButtonX(x: number): number {
+    return margin + x * (size + padding);
+}
+function getButtonY(y: number): number {
+    return 14 + margin + 27 + margin + y * (size + padding);
+}
+
+function getString(amount: number) {
+    switch (amount) {
+        case 0:
+            return "";
+        case 1:
+            return "{BABYBLUE}1";
+        case 2:
+            return "{GREEN}2";
+        case 3:
+            return "{RED}3";
+        case 4:
+            return "{PEARLAQUA}4";
+        case 5:
+            return "{TOPAZ}5";
+        case 6:
+            return "{PALELAVENDER}6";
+        case 7:
+            return "{YELLOW}7";
+        case 8:
+            return "{WHITE}8";
+        default:
+            return String(amount);
+    }
+}
+
 export default class GameWindow {
-    // style
-    private static readonly margin: number = 3;
-    private static readonly size: number = 14;
-    private static readonly padding: number = 2;
+
+    // settings
+    private readonly size: number;
+    private readonly difficulty: number;
 
     // board size
     private readonly cols: number;
@@ -35,12 +74,15 @@ export default class GameWindow {
 
     private readonly window: Window;
 
-    constructor(cols: number, rows: number, mines: number) {
-        this.cols = cols;
-        this.rows = rows;
-        this.mines = mines;
+    constructor(size: number, difficulty: number) {
+        this.size = size;
+        this.difficulty = difficulty;
 
-        this.s = cols * rows;
+        this.cols = Modes.getCols(size);
+        this.rows = Modes.getRows(size);
+        this.mines = Modes.getMines(size, difficulty);
+
+        this.s = this.cols * this.rows;
         this.b = (() => {
             let b = 0;
             while ((63 - b) * (1 << b) - 1 < this.s)
@@ -55,22 +97,22 @@ export default class GameWindow {
     }
 
     private open(): Window {
-        const width = GameWindow.margin + this.cols * (GameWindow.size + GameWindow.padding) - GameWindow.padding + GameWindow.margin;
-        const height = 14 + GameWindow.margin + 27 + GameWindow.margin + this.rows * (GameWindow.size + GameWindow.padding) - GameWindow.padding + GameWindow.margin;
+        const width = margin + this.cols * (size + padding) - padding + margin;
+        const height = 14 + margin + 27 + margin + this.rows * (size + padding) - padding + margin;
 
         const widgets: Widget[] = [];
 
         const widgetList: Widget[] = [
             Display.getMineDisplay(
-                GameWindow.margin,
-                14 + GameWindow.margin,
+                margin,
+                14 + margin,
                 Math.ceil(Math.log10(this.mines)),
                 () => this.game ? this.game.getMines() : this.mines,
             ),
             {
                 type: "button",
                 x: width / 2 - 29 / 2 - 32,
-                y: 14 + GameWindow.margin,
+                y: 14 + margin,
                 width: 29,
                 height: 27,
                 tooltip: "Settings",
@@ -80,7 +122,7 @@ export default class GameWindow {
             {
                 type: "button",
                 x: width / 2 - 29 / 2,
-                y: 14 + GameWindow.margin,
+                y: 14 + margin,
                 width: 29,
                 height: 27,
                 tooltip: "New Game",
@@ -91,16 +133,16 @@ export default class GameWindow {
             {
                 type: "button",
                 x: width / 2 - 29 / 2 + 32,
-                y: 14 + GameWindow.margin,
+                y: 14 + margin,
                 width: 29,
                 height: 27,
                 tooltip: "Highscores",
                 image: 5229,
-                onClick: () => ui.showError("Coming soon...", ""),
+                onClick: () => new HighscoresWindow(),
             },
             Display.getTimeDisplay(
-                width - GameWindow.margin,
-                14 + GameWindow.margin,
+                width - margin,
+                14 + margin,
                 () => this.game ? this.game.getTime() : -1,
             ),
         ];
@@ -145,8 +187,8 @@ export default class GameWindow {
         for (let x = 0, id = 0; x < this.cols; x++) {
             for (let y = 0; y < this.rows; y++ , id++) {
                 const widget = this.getWidget(id);
-                widget.x = this.getButtonX(x);
-                widget.y = this.getButtonY(y);
+                widget.x = getButtonX(x);
+                widget.y = getButtonY(y);
 
                 widget.isPressed = false;
                 widget.text = "";
@@ -157,7 +199,7 @@ export default class GameWindow {
     }
 
     private start(sx: number, sy: number): void {
-        this.game = new Minesweeper(this.cols, this.rows, this.mines, sx, sy, this);
+        this.game = new Minesweeper(this.size, this.difficulty, sx, sy, this);
 
         for (let x = 0, id = 0; x < this.cols; x++)
             for (let y = 0; y < this.rows; y++ , id++)
@@ -180,10 +222,10 @@ export default class GameWindow {
         const y = id % this.rows;
         return {
             type: "button",
-            x: this.getButtonX(x),
-            y: this.getButtonY(y),
-            width: GameWindow.size,
-            height: GameWindow.size,
+            x: getButtonX(x),
+            y: getButtonY(y),
+            width: size,
+            height: size,
             name: name,
             onClick: () => {
                 if (!this.game)
@@ -195,8 +237,8 @@ export default class GameWindow {
 
     private assignButton(id: number, field: Field): void {
         const widget = this.getWidget(id);
-        widget.x = this.getButtonX(field.x);
-        widget.y = this.getButtonY(field.y);
+        widget.x = getButtonX(field.x);
+        widget.y = getButtonY(field.y);
 
         widget.isPressed = field.opened;
 
@@ -216,7 +258,7 @@ export default class GameWindow {
                 else
                     widget.text = "{BLACK}X";
             else
-                widget.text = GameWindow.getString(field.mineCnt);
+                widget.text = getString(field.mineCnt);
         else
             if (field.flagged)
                 if (field.error)
@@ -270,55 +312,10 @@ export default class GameWindow {
         return dest;
     }
 
-    private getButtonX(x: number): number {
-        return GameWindow.margin + x * (GameWindow.size + GameWindow.padding);
-    }
-    private getButtonY(y: number): number {
-        return 14 + GameWindow.margin + 27 + GameWindow.margin + y * (GameWindow.size + GameWindow.padding);
-    }
-
     private getWidget(id: number): ButtonWidget {
         return this.window.findWidget(this.getWidgetName(id));
     }
     private getWidgetName(id: number) {
         return "button_" + id;
-    }
-
-    private static getString(amount: number) {
-        // GREY
-        // WHITE
-        // RED
-        // GREEN
-        // YELLOW
-        // TOPAZ
-        // CELADON
-        // BABYBLUE
-        // PALELAVENDER
-        // PALEGOLD
-        // LIGHTPINK
-        // PEARLAQUA
-        // PALESILVER
-        switch (amount) {
-            case 0:
-                return "";
-            case 1:
-                return "{BABYBLUE}1";
-            case 2:
-                return "{GREEN}2";
-            case 3:
-                return "{RED}3";
-            case 4:
-                return "{PEARLAQUA}4";
-            case 5:
-                return "{TOPAZ}5";
-            case 6:
-                return "{PALELAVENDER}6";
-            case 7:
-                return "{YELLOW}7";
-            case 8:
-                return "{WHITE}8";
-            default:
-                return String(amount);
-        }
     }
 }
