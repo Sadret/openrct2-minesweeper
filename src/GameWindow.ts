@@ -8,6 +8,7 @@
 import Display from "./Display";
 import Field from "./Field";
 import Minesweeper from "./Minesweeper";
+import SettingsWindow from "./SettingsWindow";
 
 export default class GameWindow {
     // style
@@ -74,7 +75,7 @@ export default class GameWindow {
                 height: 27,
                 tooltip: "Settings",
                 image: 5201,
-                onClick: () => ui.showError("Coming soon...", ""),
+                onClick: () => new SettingsWindow(() => this.window.close()),
             },
             {
                 type: "button",
@@ -122,7 +123,7 @@ export default class GameWindow {
         }
 
         return ui.openWindow({
-            classification: "minesweeper",
+            classification: "minesweeper-game",
             width: width,
             height: height,
             x: (ui.width - width) / 2,

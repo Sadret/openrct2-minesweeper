@@ -1,6 +1,6 @@
 /// <reference path="./../../openrct2.d.ts" />
 
-import GameWindow from "./GameWindow";
+import SettingsWindow from "./SettingsWindow";
 
 registerPlugin({
     name: "minesweeper",
@@ -10,6 +10,11 @@ registerPlugin({
     licence: "GPL-3.0",
     minApiVersion: 24,
     main: () => {
-        new GameWindow(17, 13, 16 * 2);
+        if (typeof ui === "undefined")
+            return console.log("[minesweeper] Loading cancelled: game runs in headless mode.");
+
+        ui.registerMenuItem("Minesweeper", () => new SettingsWindow());
+        // testing
+        new SettingsWindow();
     },
 });
